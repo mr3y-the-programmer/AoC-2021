@@ -1,17 +1,16 @@
 fun main() {
-    fun part1(input: List<String>): Int {
-        return input.size
-    }
 
-    fun part2(input: List<String>): Int {
-        return input.size
-    }
+    // First part
+    val incrementedMeasurements = readInputAsInts("Day01_input")
+        .countIncrementedMeasurements()
+    println(incrementedMeasurements)
 
-    // test if implementation meets criteria from the description, like:
-    val testInput = readInput("Day01_test")
-    check(part1(testInput) == 1)
-
-    val input = readInput("Day01")
-    println(part1(input))
-    println(part2(input))
+    // Second part
+    val incrementedSums = readInputAsInts("Day01_input")
+        .windowed(3)
+        .map { (a, b, c) -> a + b + c }
+        .countIncrementedMeasurements()
+    println(incrementedSums)
 }
+
+private fun List<Int>.countIncrementedMeasurements(): Int = windowed(2).count { (a, b) -> b > a }
