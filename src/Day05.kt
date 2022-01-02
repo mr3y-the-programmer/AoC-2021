@@ -32,7 +32,7 @@ fun main() {
     println(part2())
 }
 
-class CoordinatesBoard private constructor(val coordinates: Array<Array<Int>>) {
+class CoordinatesBoard private constructor(private val coordinates: Array<Array<Int>>) {
 
     fun drawLine(line: Line) {
         when {
@@ -84,11 +84,7 @@ class CoordinatesBoard private constructor(val coordinates: Array<Array<Int>>) {
         }
     }
 
-    fun countOverlappedPoints(): Int {
-        var count = 0
-        coordinates.forEach { count += it.filter { it >= 2 }.count() }
-        return count
-    }
+    fun countOverlappedPoints() = coordinates.sumOf { column -> column.count { it >= 2 } }
 
     companion object {
         fun getInstance(rowsCount: Int, columnsCount: Int) = CoordinatesBoard(Array(columnsCount) { Array(rowsCount) { 0 } })
