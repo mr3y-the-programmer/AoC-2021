@@ -1,6 +1,6 @@
 fun main() {
     val (input, boards) = readInput("Day04_input").let {
-        it.take(2).trim().single().split(",") to it.drop(2).trim().windowed(5, 5).map { it.toBoard() }
+        it.take(2).trim().single().split(",") to it.drop(2).trim().chunked(5).map { it.toBoard() }
     }
     var first: Int? = null
     var markedBoards = boards
@@ -94,5 +94,3 @@ data class BoardItem(
     val item: Int,
     val isMarked: Boolean = false
 )
-
-fun List<String>.trim() = filterNot { it.isEmpty() || it.isBlank() }

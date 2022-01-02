@@ -9,6 +9,8 @@ fun readInput(name: String) = File("src", "$name.txt").readLines()
 
 fun readInputAsInts(name: String) = readInput(name).map { it.toInt() }
 
+fun List<String>.trim() = filterNot { it.isEmpty() || it.isBlank() }
+
 /**
  * Converts string to md5 hash.
  */
