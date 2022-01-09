@@ -18,6 +18,7 @@ fun main() {
     println(largestBasinsSizes)
 }
 
+// ugly solution but it works
 private fun Array<Array<Point.RegularPoint>>.generateBasinsAtLowPoints(lowPoints: List<Point.LowPoint>): List<Basin> {
     val basins = mutableListOf<Basin>()
     for (lowPoint in lowPoints) {
@@ -27,7 +28,6 @@ private fun Array<Array<Point.RegularPoint>>.generateBasinsAtLowPoints(lowPoints
     return basins
 }
 
-// TODO: there is a bug here in distinction by indexes, so it is not working + it is too complex approach as you can see
 private fun Array<Array<Point.RegularPoint>>.getAdjacentPointsRecursively(
     rowIndex: Int,
     columnIndex: Int,
@@ -35,41 +35,95 @@ private fun Array<Array<Point.RegularPoint>>.getAdjacentPointsRecursively(
     direction: Direction = Direction.Default
 ): List<Point.RegularPoint> {
     if (rowIndex < 0 || rowIndex > lastIndex || columnIndex < 0 || columnIndex > this[0].lastIndex || this.getOrNull(rowIndex)?.getOrNull(columnIndex)?.height == 9) return emptyList()
-    val copy = initialPoints
-    if (direction.canGoLeft && !initialPoints.any { it?.rowIndex == rowIndex && it.columnIndex == columnIndex - 1 }) {
+    if (direction.canGoLeft) {
+        var checked = false
         initialPoints += this[rowIndex].getOrNull(columnIndex - 1)?.let {
-            if (it.height == 9) null else Point.RegularPoint(rowIndex, columnIndex - 1, it.height, isChecked = true)
+            if (it.height == 9 || it.isChecked)
+                null
+            else {
+                checked = true
+                Point.RegularPoint(rowIndex, columnIndex - 1, it.height)
+            }
         }
+        if (checked) this[rowIndex][columnIndex - 1] = this[rowIndex][columnIndex - 1].copy(isChecked = true)
     }
-    if (direction.canGoUp && !initialPoints.any { it?.rowIndex == rowIndex - 1 && it.columnIndex == columnIndex }) {
+    if (direction.canGoUp) {
+        var checked = false
         initialPoints += this.getOrNull(rowIndex - 1)?.get(columnIndex)?.let {
-            if (it.height == 9) null else Point.RegularPoint(rowIndex - 1, columnIndex, it.height, isChecked = true)
+            if (it.height == 9 || it.isChecked)
+                null
+            else {
+                checked = true
+                Point.RegularPoint(rowIndex - 1, columnIndex, it.height)
+            }
         }
+        if (checked) this[rowIndex - 1][columnIndex] = this[rowIndex - 1][columnIndex].copy(isChecked = true)
     }
-    if (direction.canGoRight && !initialPoints.any { it?.rowIndex == rowIndex && it.columnIndex == columnIndex + 1 }) {
+    if (direction.canGoRight) {
+        var checked = false
         initialPoints += this[rowIndex].getOrNull(columnIndex + 1)?.let {
-            if (it.height == 9) null else Point.RegularPoint(rowIndex, columnIndex + 1, it.height, isChecked = true)
+            if (it.height == 9 || it.isChecked)
+                null
+            else {
+                checked = true
+                Point.RegularPoint(rowIndex, columnIndex + 1, it.height)
+            }
         }
+        if (checked) this[rowIndex][columnIndex + 1] = this[rowIndex][columnIndex + 1].copy(isChecked = true)
     }
-    if (direction.canGoDown && !initialPoints.any { it?.rowIndex == rowIndex + 1 && it.columnIndex == columnIndex }) {
+    if (direction.canGoDown) {
+        var checked = false
         initialPoints += this.getOrNull(rowIndex + 1)?.get(columnIndex)?.let {
-            if (it.height == 9) null else Point.RegularPoint(rowIndex + 1, columnIndex, it.height, isChecked = true)
+            if (it.height == 9 || it.isChecked)
+                null
+            else {
+                checked = true
+                Point.RegularPoint(rowIndex + 1, columnIndex, it.height)
+            }
         }
+        if (checked) this[rowIndex + 1][columnIndex] = this[rowIndex + 1][columnIndex].copy(isChecked = true)
     }
 
     // add borders of borders
-    val newDirection = Direction(canGoLeft = true, canGoUp = true, canGoRight = true, canGoDown = true)
-    if (direction.canGoLeft && copy != initialPoints)
-        getAdjacentPointsRecursively(rowIndex, columnIndex - 1, initialPoints, newDirection.copy(canGoRight = false))
+    if (direction.canGoLeft) {
+        val newCopy = this.map { it.sliceArray(0 until columnIndex) }.toTypedArray()
+        newCopy.getAdjacentPointsRecursively(rowIndex, columnIndex - 1, initialPoints, direction.copy(canGoRight = false))
+        newCopy.forEachIndexed { i, row ->
+            row.forEachIndexed { j, regularPoint ->
+                if (regularPoint.isChecked) this[i][j] = regularPoint
+            }
+        }
+    }
 
-    if (direction.canGoUp && copy != initialPoints)
-        getAdjacentPointsRecursively(rowIndex - 1, columnIndex, initialPoints, newDirection.copy(canGoDown = false))
+    if (direction.canGoUp) {
+        val newCopy = this.sliceArray(0 until rowIndex)
+        newCopy.getAdjacentPointsRecursively(rowIndex - 1, columnIndex, initialPoints, direction.copy(canGoDown = false))
+        newCopy.forEachIndexed { i, row ->
+            row.forEachIndexed { j, regularPoint ->
+                if (regularPoint.isChecked) this[i][j] = regularPoint
+            }
+        }
+    }
 
-    if (direction.canGoRight && copy != initialPoints)
-        getAdjacentPointsRecursively(rowIndex, columnIndex + 1, initialPoints, newDirection.copy(canGoLeft = false))
+    if (direction.canGoRight && columnIndex + 1 <= this[0].lastIndex) {
+        val newCopy = this.map { it.sliceArray((columnIndex + 1)..it.lastIndex) }.toTypedArray()
+        newCopy.getAdjacentPointsRecursively(rowIndex, 0, initialPoints, direction.copy(canGoLeft = false))
+        newCopy.forEachIndexed { i, row ->
+            row.forEachIndexed { j, regularPoint ->
+                if (regularPoint.isChecked) this[i][j + columnIndex + 1] = regularPoint
+            }
+        }
+    }
 
-    if (direction.canGoDown && copy != initialPoints)
-        getAdjacentPointsRecursively(rowIndex + 1, columnIndex, initialPoints, newDirection.copy(canGoUp = false))
+    if (direction.canGoDown && rowIndex + 1 <= this.lastIndex) {
+        val newCopy = this.sliceArray((rowIndex + 1)..this.lastIndex)
+        newCopy.getAdjacentPointsRecursively(0, columnIndex, initialPoints, direction.copy(canGoUp = false))
+        newCopy.forEachIndexed { i, row ->
+            row.forEachIndexed { j, regularPoint ->
+                if (regularPoint.isChecked) this[i + rowIndex + 1][j] = regularPoint
+            }
+        }
+    }
 
     return initialPoints.filterNotNull()
 }
